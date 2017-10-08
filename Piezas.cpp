@@ -2,7 +2,7 @@
 #include <vector>
 /** CLASS Piezas
  * Class for representing a Piezas vertical board, which is roughly based
- * on the game "Connect Four" where pieces are placed in a column and 
+ * on the game "Connect Four" where pieces are placed in a column and
  * fall to the bottom of the column, or on top of other pieces already in
  * that column. For an illustration of the board, see:
  *  https://en.wikipedia.org/wiki/Connect_Four
@@ -17,11 +17,19 @@
 
 
 /**
- * Constructor sets an empty board (default 3 rows, 4 columns) and 
+ * Constructor sets an empty board (default 3 rows, 4 columns) and
  * specifies it is X's turn first
 **/
 Piezas::Piezas()
 {
+  for (int i = 0; i < 3; i++) {
+    std::vector<Piece> row;
+    board.push_back(row);
+    for (int j = 0; j < 4; j++) {
+      board[i].push_back(Blank);
+    }
+  }
+  turn = X;
 }
 
 /**
@@ -30,19 +38,44 @@ Piezas::Piezas()
 **/
 void Piezas::reset()
 {
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 4; j++) {
+      board[i][j] = Blank;
+    }
+  }
 }
 
 /**
  * Places a piece of the current turn on the board, returns what
- * piece is placed, and toggles which Piece's turn it is. dropPiece does 
+ * piece is placed, and toggles which Piece's turn it is. dropPiece does
  * NOT allow to place a piece in a location where a column is full.
- * In that case, placePiece returns Piece Blank value 
+ * In that case, placePiece returns Piece Blank value
  * Out of bounds coordinates return the Piece Invalid value
  * Trying to drop a piece where it cannot be placed loses the player's turn
-**/ 
+**/
 Piece Piezas::dropPiece(int column)
 {
-    return Blank;
+  if (column > 3 || column < 0) {
+    if (turn == X) {
+      turn = O;
+    } else {
+      turn = X;
+    }
+    return Invalid;
+  }
+  int i = -1;
+    while (board[i+1][column] == Blank) {
+      i++;
+    }
+  if (i >= 0) {
+    board[i][column] = turn;
+    if (turn == X) {
+      turn = O;
+    } else {
+      turn = X;
+    }
+  }
+  return board[i][column];
 }
 
 /**
@@ -51,13 +84,16 @@ Piece Piezas::dropPiece(int column)
 **/
 Piece Piezas::pieceAt(int row, int column)
 {
-    return Blank;
+    if (row > 2 || row < 0 || column > 3 || column < 0) {
+      return Invalid;
+    }
+    return board[row][column];
 }
 
 /**
  * Returns which Piece has won, if there is a winner, Invalid if the game
  * is not over, or Blank if the board is filled and no one has won ("tie").
- * For a game to be over, all locations on the board must be filled with X's 
+ * For a game to be over, all locations on the board must be filled with X's
  * and O's (i.e. no remaining Blank spaces). The winner is which player has
  * the most adjacent pieces in a single line. Lines can go either vertically
  * or horizontally. If both X's and O's have the same max number of pieces in a
@@ -65,5 +101,57 @@ Piece Piezas::pieceAt(int row, int column)
 **/
 Piece Piezas::gameState()
 {
-    return Blank;
+    int xHighest = 0;
+    int oHighest = 0;
+    for (int i = 0; i < 3; i++) {
+      int horizontalX = 1;
+      int horizontalO = 1;
+      for (int j = 0; j < 3; j++) {
+         if (board[i][j] == Blank) {
+           return Invalid;
+         }
+         if (board[i][j] == X && board[i][j] == board[i][j+1]) {
+           horizontalX++;
+         }
+         if (board[i][j] == O && board[i][j] == board[i][j+1]) {
+           horizontalO++;
+         }
+      }
+      if (horizontalX > xHighest) {
+        xHighest = horizontalX;
+      }
+      if (horizontalO > oHighest) {
+        oHighest = horizontalO;
+      }
+    }
+    
+    for (int i = 0; i < 2; i++) {
+      int verticalX = 1;
+      int verticalO = 1;
+      for (int j = 0; j < 3; j++) {
+         if (board[i][j] == Blank) {
+           return Invalid;
+         }
+         if (board[i][j] == X && board[i][j] == board[i+1][j]) {
+           verticalX++;
+         }
+         if (board[i][j] == O && board[i][j] == board[i+1][j]) {
+           verticalO++;
+         }
+      }
+      if (verticalX > xHighest) {
+        xHighest = verticalX;
+      }
+      if (verticalO > oHighest) {
+        oHighest = verticalO;
+      }
+    }
+    
+    if (xHighest > oHighest) {
+      return X;
+    } else if (oHighest > xHighest) {
+      return O;
+    } else {
+      return Blank;
+    }
 }
